@@ -2,6 +2,25 @@
 
 ## 🚀 安装和配置
 
+### Q: 为什么通过管道安装 `| bash` 会卡住？
+A: 脚本需要交互式配置，通过管道运行时无法接收用户输入。
+
+**正确的安装方式：**
+```bash
+# 下载脚本
+wget https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh
+chmod +x setup_standalone.sh
+
+# 运行安装
+sudo ./setup_standalone.sh
+```
+
+**错误的方式：**
+```bash
+# ❌ 这样会卡住
+curl -fsSL ... | sudo bash
+```
+
 ### Q: 支持哪些操作系统？
 A: 支持以下系统：
 - Ubuntu 18.04+
