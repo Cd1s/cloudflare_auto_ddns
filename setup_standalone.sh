@@ -87,7 +87,14 @@ show_welcome() {
     echo ""
     echo -e "${CYAN}💡 安装完成后，使用 'cfddns' 命令即可进入管理界面！${NC}"
     echo ""
-    read -p "按回车键开始配置..." -r
+    
+    # 检测是否通过管道运行，如果是则自动继续
+    if [[ -t 0 ]]; then
+        read -p "按回车键开始配置..." -r
+    else
+        echo "检测到非交互模式，自动开始配置..."
+        sleep 2
+    fi
 }
 
 # 检查权限
@@ -1439,10 +1446,51 @@ show_result() {
     journalctl -u "$SERVICE_NAME" -f
 }
 
+# 检测是否为交互模式
+check_interactive() {
+    if [[ -t 0 && -t 1 && -t 2 ]]; then
+        INTERACTIVE_MODE=true
+    else
+        INTERACTIVE_MODE=false
+        log_warn "检测到非交互模式，将使用默认配置"
+        echo "如需自定义配置，请手动运行: sudo ./setup_standalone.sh"
+        echo ""
+    fi
+}
+
+# 非交互模式配置
+setup_non_interactive() {
+    log_title "非交互模式配置"
+    echo ""
+    log_error "❌ 当前为非交互模式，无法获取用户输入"
+    echo ""
+    echo -e "${YELLOW}🔧 请使用以下方式进行交互式安装：${NC}"
+    echo ""
+    echo "1. 手动下载并运行："
+    echo "   wget https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh"
+    echo "   chmod +x setup_standalone.sh"
+    echo "   sudo ./setup_standalone.sh"
+    echo ""
+    echo "2. 或克隆项目后安装："
+    echo "   git clone https://github.com/Cd1s/cloudflare_auto_ddns.git"
+    echo "   cd cloudflare-auto-ddns"
+    echo "   sudo ./install.sh"
+    echo ""
+    log_error "安装已取消，请使用交互模式运行"
+    exit 1
+}
+
 # 主安装流程
 main() {
     show_welcome
     check_root
+    check_interactive
+    
+    # 如果非交互模式，显示帮助并退出
+    if [[ "$INTERACTIVE_MODE" == "false" ]]; then
+        setup_non_interactive
+    fi
+    
     detect_system
     install_dependencies
     
