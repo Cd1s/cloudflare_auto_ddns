@@ -5,26 +5,20 @@
 ### 方式一：独立脚本一键安装 (推荐)
 
 ```bash
-# 下载并运行独立安装脚本
-curl -fsSL https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh | sudo bash
-```
-
-**或者手动下载运行：**
-```bash
-# 下载脚本
+# 下载脚本并运行 (推荐方式)
 wget https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh
 chmod +x setup_standalone.sh
-
-# 运行安装
 sudo ./setup_standalone.sh
 ```
+
+**⚠️ 重要**: 脚本需要交互式配置，请使用上述手动下载方式，不要使用管道 `| bash`。
 
 ### 方式二：克隆项目安装
 
 ```bash
 # 克隆项目
 git clone https://github.com/Cd1s/cloudflare_auto_ddns.git
-cd cloudflare-auto-ddns
+cd cloudflare_auto_ddns
 
 # 运行交互式安装
 sudo ./install.sh
