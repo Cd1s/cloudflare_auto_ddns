@@ -35,19 +35,13 @@
 ### 方式一：独立脚本一键安装 (推荐，无需git)
 
 ```bash
-# 下载并运行独立安装脚本
-curl -fsSL https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh | sudo bash
-```
-
-**或者手动下载运行：**
-```bash
-# 下载脚本
+# 下载脚本并运行 (推荐方式)
 wget https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh
 chmod +x setup_standalone.sh
-
-# 运行安装
 sudo ./setup_standalone.sh
 ```
+
+**⚠️ 注意**: 由于脚本需要交互式配置，请避免使用管道方式 `| bash`，推荐使用上述手动下载方式。
 
 **✨ 安装完成后使用 `cfddns` 命令进入管理界面！**
 
