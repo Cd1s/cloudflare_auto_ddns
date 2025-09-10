@@ -56,7 +56,7 @@ sudo ./setup_standalone.sh
 ```bash
 # 克隆项目
 git clone https://github.com/Cd1s/cloudflare_auto_ddns.git
-cd cloudflare-auto-ddns
+cd cloudflare_auto_ddns
 
 # 运行交互式安装脚本
 sudo ./install.sh
