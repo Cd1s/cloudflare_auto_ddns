@@ -32,11 +32,30 @@
 
 ## 🚀 快速开始
 
-### 方式一：交互式一键安装 (推荐)
+### 方式一：独立脚本一键安装 (推荐，无需git)
+
+```bash
+# 下载并运行独立安装脚本
+curl -fsSL https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh | sudo bash
+```
+
+**或者手动下载运行：**
+```bash
+# 下载脚本
+wget https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh
+chmod +x setup_standalone.sh
+
+# 运行安装
+sudo ./setup_standalone.sh
+```
+
+**✨ 安装完成后使用 `cfddns` 命令进入管理界面！**
+
+### 方式二：克隆项目交互式安装
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/cloudflare-auto-ddns.git
+git clone https://github.com/Cd1s/cloudflare_auto_ddns.git
 cd cloudflare-auto-ddns
 
 # 运行交互式安装脚本
@@ -52,11 +71,11 @@ sudo ./install.sh
 - ⚙️ 系统设置 (检查间隔等)
 - 🚀 自动安装并启动服务
 
-### 方式二：手动配置安装
+### 方式三：手动配置安装
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/cloudflare-auto-ddns.git
+git clone https://github.com/Cd1s/cloudflare_auto_ddns.git
 cd cloudflare-auto-ddns
 
 # 安装依赖
@@ -133,10 +152,10 @@ sudo systemctl enable cloudflare-auto-ddns
 
 #### 服务管理
 
-**方式一：使用交互式管理脚本 (推荐)**
+**方式一：使用 cfddns 命令 (推荐)**
 ```bash
-# 运行交互式管理工具
-sudo ./manage.sh
+# 进入交互式管理界面
+cfddns
 ```
 
 **管理工具功能：**
@@ -145,7 +164,13 @@ sudo ./manage.sh
 - 🔍 自动发现设置 (开启/关闭智能发现)
 - 🔧 高级功能 (测试运行/编辑配置/扫描域名)
 
-**方式二：使用systemctl命令**
+**方式二：使用 manage.sh 脚本**
+```bash
+# 如果是git方式安装，可以使用manage.sh
+sudo ./manage.sh
+```
+
+**方式三：使用systemctl命令**
 ```bash
 # 查看状态
 sudo systemctl status cloudflare-auto-ddns
@@ -158,14 +183,6 @@ sudo systemctl restart cloudflare-auto-ddns
 
 # 停止服务
 sudo systemctl stop cloudflare-auto-ddns
-```
-
-**方式三：使用快捷命令**
-```bash
-# 如果安装时创建了快捷命令
-cloudflare-auto-ddns status
-cloudflare-auto-ddns logs
-cloudflare-auto-ddns restart
 ```
 
 ## ⚙️ 配置说明
@@ -312,9 +329,9 @@ systemctl status cloudflare-auto-ddns
 
 ## 📞 支持
 
-- 🐛 [问题反馈](https://github.com/your-username/cloudflare-auto-ddns/issues)
-- 💡 [功能请求](https://github.com/your-username/cloudflare-auto-ddns/issues)
-- 📖 [Wiki文档](https://github.com/your-username/cloudflare-auto-ddns/wiki)
+- 🐛 [问题反馈](https://github.com/Cd1s/cloudflare_auto_ddns/issues)
+- 💡 [功能请求](https://github.com/Cd1s/cloudflare_auto_ddns/issues)
+- 📖 [Wiki文档](https://github.com/Cd1s/cloudflare_auto_ddns/wiki)
 
 ## 🙏 致谢
 

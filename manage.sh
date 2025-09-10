@@ -785,7 +785,7 @@ show_help() {
     echo "  cloudflare-auto-ddns [status|logs|restart]"
     echo ""
     echo -e "${CYAN}项目地址：${NC}"
-    echo "  https://github.com/your-username/cloudflare-auto-ddns"
+    echo "  https://github.com/Cd1s/cloudflare_auto_ddns"
     echo ""
     read -p "按回车键返回主菜单..." -r
 }

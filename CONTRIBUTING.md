@@ -5,12 +5,12 @@
 ## 🤝 如何贡献
 
 ### 报告问题
-- 使用 [GitHub Issues](https://github.com/your-username/cloudflare-auto-ddns/issues) 报告bug
+- 使用 [GitHub Issues](https://github.com/Cd1s/cloudflare_auto_ddns/issues) 报告bug
 - 提供详细的错误信息和复现步骤
 - 包含系统环境信息
 
 ### 功能请求
-- 在 [GitHub Issues](https://github.com/your-username/cloudflare-auto-ddns/issues) 中使用 "Feature Request" 标签
+- 在 [GitHub Issues](https://github.com/Cd1s/cloudflare_auto_ddns/issues) 中使用 "Feature Request" 标签
 - 详细描述所需功能和使用场景
 - 说明为什么这个功能对项目有价值
 
@@ -27,7 +27,7 @@
 ### 环境设置
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/cloudflare-auto-ddns.git
+git clone https://github.com/Cd1s/cloudflare_auto_ddns.git
 cd cloudflare-auto-ddns
 
 # 安装依赖
@@ -134,8 +134,8 @@ python3 auto_ddns.py config.test.json
 
 ## 📞 联系方式
 
-- 项目主页: [GitHub](https://github.com/your-username/cloudflare-auto-ddns)
-- 问题反馈: [Issues](https://github.com/your-username/cloudflare-auto-ddns/issues)
-- 功能讨论: [Discussions](https://github.com/your-username/cloudflare-auto-ddns/discussions)
+- 项目主页: [GitHub](https://github.com/Cd1s/cloudflare_auto_ddns)
+- 问题反馈: [Issues](https://github.com/Cd1s/cloudflare_auto_ddns/issues)
+- 功能讨论: [Discussions](https://github.com/Cd1s/cloudflare_auto_ddns/discussions)
 
 感谢您的贡献！

@@ -24,7 +24,8 @@ A: 按以下步骤获取：
 
 ### Q: 配置文件放在哪里？
 A: 
-- 使用安装脚本安装：`/etc/cloudflare-auto-ddns/config.json`
+- 使用独立脚本安装：`/etc/cloudflare_auto_ddns/config.json`
+- 使用git克隆安装：`/etc/cloudflare-auto-ddns/config.json`
 - 手动运行：当前目录下的 `config.json`
 
 ### Q: 如何验证配置文件格式？
@@ -91,13 +92,19 @@ systemctl status cloudflare-auto-ddns
 ```
 
 ### Q: 如何修改配置？
-A: 
+A: **推荐使用 cfddns 命令：**
 ```bash
-# 编辑配置文件
-cloudflare-auto-ddns config
+cfddns
+```
+进入交互式管理界面，可以修改所有配置项。
+
+**其他方式：**
+```bash
+# 手动编辑配置文件
+sudo nano /etc/cloudflare_auto_ddns/config.json
 
 # 重启服务应用配置
-cloudflare-auto-ddns restart
+sudo systemctl restart cloudflare-auto-ddns
 ```
 
 ### Q: 程序会自动重启吗？
@@ -214,6 +221,64 @@ A: 在GitHub提交Issue，包含：
 3. 错误日志
 4. 复现步骤
 
+## 🔍 自动发现功能
+
+### Q: 什么是自动发现功能？
+A: 自动发现功能可以：
+- ✅ 自动扫描您Cloudflare账户中的所有Zone
+- ✅ 发现所有使用目标IP的域名  
+- ✅ 自动加入管理列表进行时间段切换
+- ✅ 新域名会自动生效，无需手动配置
+
+### Q: 如何控制自动发现功能？
+A: 使用 `cfddns` 命令进入管理界面：
+1. 选择 "10) 自动发现设置"
+2. 选择开启或关闭自动发现
+3. 系统会自动重启服务应用新设置
+
+### Q: 开启自动发现安全吗？
+A: 非常安全：
+- 🔒 只会替换您指定的两个IP地址
+- 🔒 完全保留域名的其他DNS记录
+- 🔒 不会影响CNAME、MX等其他类型记录
+- 🔒 支持精确控制，可随时关闭
+
+### Q: 什么时候该关闭自动发现？
+A: 以下情况建议关闭：
+- 🎯 只想管理特定的几个域名
+- 🎯 账户中有其他服务使用相同IP
+- 🎯 需要精确控制避免意外修改
+- 🎯 复杂的DNS配置环境
+
+### Q: 自动发现会影响性能吗？
+A: 影响很小：
+- ⚡ 只在配置的检查间隔时执行扫描
+- ⚡ 使用API批量获取，效率很高
+- ⚡ 有缓存机制，避免重复请求
+- ⚡ 可以通过关闭功能完全避免扫描
+
+## 🎮 cfddns 管理命令
+
+### Q: cfddns 命令有什么功能？
+A: cfddns 提供完整的交互式管理界面：
+- 📊 服务管理 (启动/停止/重启/状态/日志)
+- ⚙️ 配置管理 (更换IP/修改时间段/管理域名)
+- 🔍 自动发现设置 (开启/关闭智能发现)
+- 🔧 高级功能 (测试运行/编辑配置/扫描域名)
+
+### Q: cfddns 命令安全吗？
+A: 是的，完全安全：
+- 🔒 需要root权限运行
+- 🔒 自动备份配置文件
+- 🔒 验证配置格式正确性
+- 🔒 确认操作才会执行
+
+### Q: 如果 cfddns 命令不存在怎么办？
+A: 可能的原因：
+1. **独立脚本安装问题**：重新运行安装脚本
+2. **权限问题**：确保使用 `sudo cfddns`
+3. **路径问题**：检查 `/usr/local/bin/cfddns` 是否存在
+
 ---
 
-**没有找到您的问题？** 请在 [GitHub Issues](https://github.com/your-username/cloudflare-auto-ddns/issues) 中提问！
+**没有找到您的问题？** 请在 [GitHub Issues](https://github.com/Cd1s/cloudflare_auto_ddns/issues) 中提问！

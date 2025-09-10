@@ -27,6 +27,7 @@
       "type": "A"
     }
   ],
+  "auto_discovery": true,
   "check_interval": 300
 }
 ```
@@ -69,6 +70,7 @@
       "type": "A"
     }
   ],
+  "auto_discovery": true,
   "check_interval": 300
 }
 ```
@@ -113,6 +115,7 @@
       "type": "A"
     }
   ],
+  "auto_discovery": true,
   "check_interval": 300
 }
 ```
@@ -335,3 +338,97 @@
 1. **API Token**: 使用最小权限原则，只授予必要的DNS编辑权限
 2. **配置备份**: 定期备份配置文件
 3. **监控告警**: 配置日志监控和告警机制
+
+## 🔍 自动发现功能配置
+
+### 开启自动发现 (推荐)
+
+```json
+{
+  "cloudflare": {
+    "email": "user@example.com",
+    "api_token": "your-api-token"
+  },
+  "schedule": {
+    "day_start_hour": 6,
+    "day_end_hour": 22,
+    "day_ip": "1.2.3.4",
+    "night_ip": "5.6.7.8"
+  },
+  "domains": [],
+  "auto_discovery": true,
+  "check_interval": 300
+}
+```
+
+**特点：**
+- ✅ 自动扫描所有Zone中使用目标IP的域名
+- ✅ 无需手动配置域名列表
+- ✅ 新域名自动生效
+
+### 关闭自动发现 (精确控制)
+
+```json
+{
+  "cloudflare": {
+    "email": "user@example.com", 
+    "api_token": "your-api-token"
+  },
+  "schedule": {
+    "day_start_hour": 6,
+    "day_end_hour": 22,
+    "day_ip": "1.2.3.4",
+    "night_ip": "5.6.7.8"
+  },
+  "domains": [
+    {
+      "name": "example.com",
+      "zone": "example.com",
+      "type": "A"
+    },
+    {
+      "name": "www.example.com",
+      "zone": "example.com", 
+      "type": "A"
+    }
+  ],
+  "auto_discovery": false,
+  "check_interval": 300
+}
+```
+
+**特点：**
+- 🔒 只管理手动配置的域名
+- 🔒 避免意外修改其他域名
+- 🔒 适合复杂DNS配置环境
+
+### 混合模式 (推荐)
+
+```json
+{
+  "cloudflare": {
+    "email": "user@example.com",
+    "api_token": "your-api-token"
+  },
+  "schedule": {
+    "day_start_hour": 6,
+    "day_end_hour": 22,
+    "day_ip": "1.2.3.4", 
+    "night_ip": "5.6.7.8"
+  },
+  "domains": [
+    {
+      "name": "important.example.com",
+      "zone": "example.com",
+      "type": "A"
+    }
+  ],
+  "auto_discovery": true,
+  "check_interval": 300
+}
+```
+
+**特点：**
+- 🎯 手动配置的域名优先处理
+- 🔍 自动发现其他相关域名
+- ⚖️ 平衡控制和自动化

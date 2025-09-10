@@ -4,7 +4,7 @@ Cloudflare Auto DDNS - 智能时间段DNS解析切换工具
 根据时间段自动切换Cloudflare DNS记录的IP地址
 专注于只替换指定的IP记录，完全保留其他解析记录
 
-GitHub: https://github.com/your-username/cloudflare-auto-ddns
+GitHub: https://github.com/Cd1s/cloudflare_auto_ddns
 License: MIT
 """
 
