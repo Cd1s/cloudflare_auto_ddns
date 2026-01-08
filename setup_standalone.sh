@@ -999,9 +999,9 @@ class DDNSManager:
     
     def show_main_menu(self):
         """显示主菜单"""
-        print("\n" + "="*60)
+        print("\n" + "="*64)
         print("🚀 Cloudflare Auto DDNS 管理工具")
-        print("="*60)
+        print("="*64)
         print()
         print("📊 服务管理:")
         print("  1) 查看服务状态")
@@ -1014,14 +1014,121 @@ class DDNSManager:
         print("  6) 查看当前配置")
         print("  7) 更换IP地址")
         print("  8) 修改时间段")
-        print("  9) 管理域名")
-        print("  10) 自动发现设置")
-        print("  11) 修改检查间隔")
+        print("  9) 修改检查间隔")
         print()
         print("🔧 高级功能:")
-        print("  12) 手动测试运行")
+        print("  10) 手动测试运行")
+        print()
+        print("🛠️ 系统管理:")
+        print("  11) 更新程序")
+        print("  12) 卸载程序")
+        print()
         print("  0) 退出")
         print()
+    
+    def update_program(self):
+        """更新程序"""
+        print("\n🔄 更新程序")
+        print("="*64)
+        print()
+        print("正在从GitHub下载最新版本...")
+        
+        import tempfile
+        temp_dir = tempfile.mkdtemp()
+        script_path = f"{temp_dir}/setup_standalone.sh"
+        
+        try:
+            # 下载最新安装脚本
+            import urllib.request
+            url = "https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh"
+            print(f"下载地址: {url}")
+            
+            urllib.request.urlretrieve(url, script_path)
+            os.chmod(script_path, 0o755)
+            
+            print("✅ 下载完成")
+            print()
+            confirm = input("是否立即执行更新？这将重新配置服务 (y/N): ")
+            
+            if confirm.lower() == 'y':
+                print("\n开始更新...")
+                # 执行安装脚本
+                os.system(f"sudo {script_path}")
+            else:
+                print("❌ 更新已取消")
+                print(f"下载的脚本位于: {script_path}")
+                
+        except Exception as e:
+            print(f"❌ 更新失败: {e}")
+        
+        input("\n按回车键继续...")
+    
+    def uninstall_program(self):
+        """卸载程序"""
+        print("\n🗑️ 卸载程序")
+        print("="*64)
+        print()
+        print("⚠️  警告：此操作将：")
+        print("  1. 停止并禁用服务")
+        print("  2. 删除所有程序文件")
+        print("  3. 删除配置文件")
+        print("  4. 删除日志文件")
+        print("  5. 删除管理命令")
+        print()
+        
+        confirm1 = input("确认要卸载吗？(yes/no): ")
+        if confirm1.lower() != 'yes':
+            print("❌ 卸载已取消")
+            input("\n按回车键继续...")
+            return
+        
+        confirm2 = input("再次确认？这将删除所有数据！(yes/no): ")
+        if confirm2.lower() != 'yes':
+            print("❌ 卸载已取消")
+            input("\n按回车键继续...")
+            return
+        
+        print("\n开始卸载...")
+        
+        try:
+            # 停止服务
+            print("1. 停止服务...")
+            subprocess.run(f"systemctl stop {self.service_name}", shell=True)
+            
+            # 禁用服务
+            print("2. 禁用服务...")
+            subprocess.run(f"systemctl disable {self.service_name}", shell=True)
+            
+            # 删除服务文件
+            print("3. 删除服务文件...")
+            subprocess.run(f"rm -f /etc/systemd/system/{self.service_name}.service", shell=True)
+            subprocess.run("systemctl daemon-reload", shell=True)
+            
+            # 删除程序文件
+            print("4. 删除程序文件...")
+            subprocess.run("rm -rf /etc/cloudflare_auto_ddns", shell=True)
+            
+            # 删除日志文件
+            print("5. 删除日志文件...")
+            subprocess.run(f"rm -f {self.log_file}", shell=True)
+            
+            # 删除管理命令
+            print("6. 删除管理命令...")
+            subprocess.run("rm -f /usr/local/bin/cfddns", shell=True)
+            
+            print()
+            print("="*64)
+            print("✅ 卸载完成")
+            print()
+            print("感谢使用 Cloudflare Auto DDNS！")
+            print("如需重新安装，请访问: https://github.com/Cd1s/cloudflare_auto_ddns")
+            print("="*64)
+            
+            sys.exit(0)
+            
+        except Exception as e:
+            print(f"❌ 卸载过程中出现错误: {e}")
+            input("\n按回车键继续...")
     
     def show_service_status(self):
         """显示服务状态"""
@@ -1118,93 +1225,6 @@ class DDNSManager:
         except ValueError:
             print("❌ 请输入有效的数字")
     
-    def manage_domains(self):
-        """管理域名"""
-        while True:
-            print("\n🌐 域名管理")
-            config = self.load_config()
-            if not config:
-                return
-            
-            domains = config.get('domains', [])
-            print(f"\n当前域名 ({len(domains)}个):")
-            for i, domain in enumerate(domains, 1):
-                print(f"  {i}. {domain['name']} (Zone: {domain['zone']})")
-            
-            print("\n操作:")
-            print("  1) 添加域名")
-            print("  2) 删除域名")
-            print("  0) 返回主菜单")
-            
-            choice = input("\n请选择 (0-2): ").strip()
-            
-            if choice == '1':
-                domain_name = input("\n域名 (如: www.example.com): ").strip()
-                zone_name = input("根域名 (如: example.com): ").strip()
-                
-                if domain_name and zone_name:
-                    new_domain = {
-                        "name": domain_name,
-                        "zone": zone_name,
-                        "type": "A"
-                    }
-                    config['domains'].append(new_domain)
-                    if self.save_config(config):
-                        self.restart_service()
-                        print(f"✅ 已添加域名: {domain_name}")
-            
-            elif choice == '2':
-                if not domains:
-                    print("❌ 没有域名可删除")
-                    continue
-                
-                try:
-                    index = int(input(f"\n要删除的域名编号 (1-{len(domains)}): ")) - 1
-                    if 0 <= index < len(domains):
-                        domain_name = domains[index]['name']
-                        confirm = input(f"确认删除 {domain_name}？ (y/N): ")
-                        if confirm.lower() == 'y':
-                            del config['domains'][index]
-                            if self.save_config(config):
-                                self.restart_service()
-                                print(f"✅ 已删除域名: {domain_name}")
-                    else:
-                        print("❌ 无效的编号")
-                except ValueError:
-                    print("❌ 请输入有效的数字")
-            
-            elif choice == '0':
-                break
-    
-    def toggle_auto_discovery(self):
-        """切换自动发现功能"""
-        print("\n🔍 自动发现功能设置")
-        config = self.load_config()
-        if not config:
-            return
-        
-        current = config.get('auto_discovery', True)
-        print(f"\n当前状态: {'开启' if current else '关闭'}")
-        
-        print("\n1) 开启自动发现")
-        print("2) 关闭自动发现")
-        print("0) 返回")
-        
-        choice = input("\n请选择 (0-2): ").strip()
-        
-        if choice == '1':
-            new_setting = True
-        elif choice == '2':
-            new_setting = False
-        else:
-            return
-        
-        if new_setting != current:
-            config['auto_discovery'] = new_setting
-            if self.save_config(config):
-                self.restart_service()
-                print(f"✅ 自动发现功能已{'开启' if new_setting else '关闭'}")
-    
     def change_interval(self):
         """修改检查间隔"""
         print("\n⏱️ 修改检查间隔")
@@ -1293,13 +1313,13 @@ class DDNSManager:
             elif choice == '8':
                 self.change_schedule()
             elif choice == '9':
-                self.manage_domains()
-            elif choice == '10':
-                self.toggle_auto_discovery()
-            elif choice == '11':
                 self.change_interval()
-            elif choice == '12':
+            elif choice == '10':
                 self.test_run()
+            elif choice == '11':
+                self.update_program()
+            elif choice == '12':
+                self.uninstall_program()
             elif choice == '0':
                 print("\n👋 感谢使用 Cloudflare Auto DDNS 管理工具！")
                 break
