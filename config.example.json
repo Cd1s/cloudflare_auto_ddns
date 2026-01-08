@@ -10,24 +10,9 @@
     "night_ip": "5.6.7.8",
     "_comment": "时间使用本地时间，白天6:00-22:00使用day_ip，夜间22:00-6:00使用night_ip"
   },
-  "domains": [
-    {
-      "name": "example.com",
-      "zone": "example.com",
-      "type": "A"
-    },
-    {
-      "name": "www.example.com",
-      "zone": "example.com",
-      "type": "A"
-    },
-    {
-      "name": "api.example.com",
-      "zone": "example.com",
-      "type": "A"
-    }
-  ],
-  "auto_discovery": true,
+  "target_zones": [],
+  "target_domains": [],
+  "_domain_config_comment": "配置说明：1) target_zones不为空: 只扫描这些zone下使用目标IP的域名; 2) target_domains不为空: 只更新这些具体域名; 3) 都为空: 扫描所有zones下使用目标IP的域名",
   "log": {
     "level": "INFO",
     "file": "/var/log/cloudflare-auto-ddns.log"

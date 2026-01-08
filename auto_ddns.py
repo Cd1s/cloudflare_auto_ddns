@@ -110,7 +110,7 @@ class AutoDDNS:
             required_fields = [
                 "cloudflare.email", "cloudflare.api_token",
                 "schedule.day_start_hour", "schedule.day_end_hour",
-                "schedule.day_ip", "schedule.night_ip", "domains"
+                "schedule.day_ip", "schedule.night_ip"
             ]
             
             for field in required_fields:
@@ -121,6 +121,12 @@ class AutoDDNS:
                         value = value[key]
                 except KeyError:
                     raise Exception(f"配置文件缺少必要字段: {field}")
+            
+            # 确保target_zones和target_domains存在（可以为空）
+            if "target_zones" not in config:
+                config["target_zones"] = []
+            if "target_domains" not in config:
+                config["target_domains"] = []
             
             return config
             
@@ -191,79 +197,133 @@ class AutoDDNS:
             self.zone_cache[zone_name] = self.cf_api.get_zone_id(zone_name)
         return self.zone_cache[zone_name]
     
+    def get_all_zones(self) -> List[Dict]:
+        """获取账户下所有的Zone"""
+        try:
+            result = self.cf_api._make_request("GET", "zones")
+            zones = result.get("result", [])
+            self.logger.debug(f"获取到 {len(zones)} 个Zone")
+            return zones
+        except Exception as e:
+            self.logger.error(f"获取Zone列表失败: {str(e)}")
+            return []
+    
     def update_domain_records(self) -> int:
-        """更新域名记录，只替换指定的IP"""
+        """更新域名记录，支持三种模式：
+        1. target_domains不为空：只更新指定的具体域名
+        2. target_zones不为空：扫描指定zones下使用目标IP的所有域名
+        3. 都为空：扫描所有zones下使用目标IP的所有域名
+        """
         target_ip = self.get_current_target_ip()
         managed_ips = [self.config["schedule"]["day_ip"], self.config["schedule"]["night_ip"]]
-        auto_discovery = self.config.get("auto_discovery", True)
+        
+        target_zones = self.config.get("target_zones", [])
+        target_domains = self.config.get("target_domains", [])
         
         self.logger.info(f"目标IP: {target_ip}, 管理的IP: {managed_ips}")
-        self.logger.info(f"自动发现功能: {'开启' if auto_discovery else '关闭'}")
         
         updated_count = 0
         
-        # 处理配置中的域名
-        for domain_config in self.config["domains"]:
-            domain_name = domain_config["name"]
-            zone_name = domain_config["zone"]
+        # 模式1: 指定具体域名
+        if target_domains:
+            self.logger.info(f"📝 指定域名模式: 只更新配置的 {len(target_domains)} 个域名")
             
-            try:
-                zone_id = self.get_zone_id(zone_name)
-                records = self.cf_api.get_dns_records(zone_id, domain_name)
-                
-                for record in records:
-                    record_ip = record["content"]
-                    
-                    # 只更新我们管理的IP
-                    if record_ip in managed_ips and record_ip != target_ip:
-                        self.logger.info(f"更新配置域名 {domain_name}: {record_ip} -> {target_ip}")
-                        
-                        self.cf_api.update_dns_record(
-                            zone_id, record["id"], domain_name, target_ip
-                        )
-                        updated_count += 1
-                        self.logger.info(f"✅ 成功更新配置域名 {domain_name}")
-                        
-            except Exception as e:
-                self.logger.error(f"❌ 处理域名 {domain_name} 失败: {str(e)}")
-        
-        # 智能发现功能（可选）
-        if auto_discovery:
-            self.logger.info("🔍 开始智能发现扫描...")
-            zones_scanned = set()
-            for domain_config in self.config["domains"]:
+            for domain_config in target_domains:
+                domain_name = domain_config["name"]
                 zone_name = domain_config["zone"]
-                if zone_name in zones_scanned:
-                    continue
-                zones_scanned.add(zone_name)
                 
                 try:
                     zone_id = self.get_zone_id(zone_name)
-                    all_records = self.cf_api.get_dns_records(zone_id)
+                    records = self.cf_api.get_dns_records(zone_id, domain_name)
                     
-                    configured_domains = [d["name"] for d in self.config["domains"]]
+                    for record in records:
+                        record_ip = record["content"]
+                        
+                        # 只更新我们管理的IP
+                        if record_ip in managed_ips:
+                            if record_ip != target_ip:
+                                self.logger.info(f"更新域名 {domain_name}: {record_ip} -> {target_ip}")
+                                
+                                self.cf_api.update_dns_record(
+                                    zone_id, record["id"], domain_name, target_ip
+                                )
+                                updated_count += 1
+                                self.logger.info(f"✅ 成功更新 {domain_name}")
+                            else:
+                                self.logger.debug(f"域名 {domain_name} 已经是目标IP，无需更新")
+                        else:
+                            self.logger.debug(f"域名 {domain_name} 的IP ({record_ip}) 不在管理范围内")
+                            
+                except Exception as e:
+                    self.logger.error(f"❌ 处理域名 {domain_name} 失败: {str(e)}")
+        
+        # 模式2: 指定Zone扫描
+        elif target_zones:
+            self.logger.info(f"📂 指定Zone扫描模式: 扫描 {len(target_zones)} 个Zone")
+            
+            for zone_name in target_zones:
+                try:
+                    zone_id = self.get_zone_id(zone_name)
+                    self.logger.info(f"🔍 扫描Zone: {zone_name}")
+                    
+                    all_records = self.cf_api.get_dns_records(zone_id)
+                    self.logger.debug(f"Zone {zone_name} 有 {len(all_records)} 条A记录")
                     
                     for record in all_records:
                         record_name = record["name"]
                         record_ip = record["content"]
                         
-                        # 跳过已配置的域名，只处理未配置但使用我们管理IP的域名
-                        if (record_name not in configured_domains and 
-                            record_ip in managed_ips and 
-                            record_ip != target_ip):
-                            
-                            self.logger.info(f"🔍 智能发现域名 {record_name}: {record_ip} -> {target_ip}")
-                            
-                            self.cf_api.update_dns_record(
-                                zone_id, record["id"], record_name, target_ip
-                            )
-                            updated_count += 1
-                            self.logger.info(f"✅ 成功更新发现域名 {record_name}")
+                        # 只处理使用我们管理IP的域名
+                        if record_ip in managed_ips:
+                            if record_ip != target_ip:
+                                self.logger.info(f"发现域名 {record_name}: {record_ip} -> {target_ip}")
+                                
+                                self.cf_api.update_dns_record(
+                                    zone_id, record["id"], record_name, target_ip
+                                )
+                                updated_count += 1
+                                self.logger.info(f"✅ 成功更新 {record_name}")
+                            else:
+                                self.logger.debug(f"域名 {record_name} 已经是目标IP，无需更新")
                             
                 except Exception as e:
                     self.logger.error(f"❌ 扫描Zone {zone_name} 失败: {str(e)}")
+        
+        # 模式3: 全局扫描所有Zone
         else:
-            self.logger.info("🔒 智能发现功能已关闭，仅处理配置中的域名")
+            self.logger.info("🔍 全局扫描模式: 扫描所有Zone")
+            
+            all_zones = self.get_all_zones()
+            self.logger.info(f"将扫描 {len(all_zones)} 个Zone")
+            
+            for zone in all_zones:
+                zone_name = zone["name"]
+                zone_id = zone["id"]
+                
+                try:
+                    self.logger.debug(f"正在扫描Zone: {zone_name}")
+                    all_records = self.cf_api.get_dns_records(zone_id)
+                    self.logger.debug(f"Zone {zone_name} 有 {len(all_records)} 条A记录")
+                    
+                    for record in all_records:
+                        record_name = record["name"]
+                        record_ip = record["content"]
+                        
+                        # 只处理使用我们管理IP的域名
+                        if record_ip in managed_ips:
+                            if record_ip != target_ip:
+                                self.logger.info(f"发现域名 {record_name}: {record_ip} -> {target_ip}")
+                                
+                                self.cf_api.update_dns_record(
+                                    zone_id, record["id"], record_name, target_ip
+                                )
+                                updated_count += 1
+                                self.logger.info(f"✅ 成功更新 {record_name}")
+                            else:
+                                self.logger.debug(f"域名 {record_name} 已经是目标IP，无需更新")
+                            
+                except Exception as e:
+                    self.logger.error(f"❌ 扫描Zone {zone_name} 失败: {str(e)}")
         
         return updated_count
     

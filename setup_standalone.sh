@@ -28,10 +28,10 @@ DAY_START_HOUR=""
 DAY_END_HOUR=""
 DAY_IP=""
 NIGHT_IP=""
-DOMAINS_LIST=()
+TARGET_ZONES=()
+TARGET_DOMAINS=()
 CHECK_INTERVAL=""
 TIMEZONE=""
-AUTO_DISCOVERY=""
 
 # 日志函数
 log_info() {
@@ -80,10 +80,9 @@ show_welcome() {
     echo -e "${YELLOW}📋 本程序将引导您完成以下配置：${NC}"
     echo "  1. Cloudflare 账户信息"
     echo "  2. 时间段和IP设置"
-    echo "  3. 自动发现功能配置"
-    echo "  4. 域名配置"
-    echo "  5. 系统设置"
-    echo "  6. 自动安装和启动服务"
+    echo "  3. 域名扫描模式配置"
+    echo "  4. 系统设置"
+    echo "  5. 自动安装和启动服务"
     echo ""
     echo -e "${CYAN}💡 安装完成后，使用 'cfddns' 命令即可进入管理界面！${NC}"
     echo ""
@@ -323,118 +322,105 @@ config_schedule() {
     echo ""
 }
 
-# 配置自动发现功能
-config_auto_discovery() {
-    log_title "自动发现功能配置"
-    echo ""
-    echo -e "${YELLOW}🔍 智能发现功能说明：${NC}"
-    echo ""
-    echo -e "${GREEN}开启智能发现 (推荐)：${NC}"
-    echo "  ✅ 自动扫描您Cloudflare账户中的所有Zone"
-    echo "  ✅ 发现所有使用 $DAY_IP 或 $NIGHT_IP 的域名"
-    echo "  ✅ 自动管理这些域名，无需手动配置"
-    echo "  ✅ 新域名会自动加入管理"
-    echo ""
-    echo -e "${CYAN}关闭智能发现：${NC}"
-    echo "  🔒 只管理您手动配置的域名"
-    echo "  🔒 更加精确控制，避免意外修改"
-    echo "  🔒 适合复杂DNS配置环境"
-    echo ""
-    echo -e "${RED}⚠️  示例场景：${NC}"
-    echo "  假设您有 1.example.com 解析到 $DAY_IP"
-    echo "  同时 2.example.com 也恰好解析到 $DAY_IP"
-    echo "  如果开启自动发现，两个域名都会被管理"
-    echo "  如果关闭自动发现，只有手动配置的域名会被管理"
-    echo ""
-    
-    while true; do
-        log_input "是否开启智能发现功能？(Y/n):"
-        read -r auto_discovery_choice
-        
-        case $auto_discovery_choice in
-            [Yy]|"") 
-                AUTO_DISCOVERY=true
-                log_info "✅ 已开启智能发现功能"
-                break
-                ;;
-            [Nn])
-                AUTO_DISCOVERY=false
-                log_warn "🔒 已关闭智能发现功能，仅管理手动配置的域名"
-                break
-                ;;
-            *)
-                log_error "请输入 Y 或 N"
-                ;;
-        esac
-    done
-    echo ""
-}
-
 # 配置域名
 config_domains() {
     log_title "域名配置"
     echo ""
     
-    if [[ "$AUTO_DISCOVERY" == "true" ]]; then
-        echo -e "${YELLOW}🌐 域名配置 (可选)：${NC}"
-        echo ""
-        echo -e "${CYAN}💡 智能发现已开启：${NC}"
-        echo "  ✅ 系统会自动发现所有使用目标IP的域名"
-        echo "  ✅ 这里配置的域名会优先处理"
-        echo "  ✅ 可以不配置任何域名，完全依赖智能发现"
-        echo ""
-        read -p "是否要手动添加优先处理的域名？(y/N): " -r add_domains
-    else
-        echo -e "${YELLOW}🌐 域名配置 (必需)：${NC}"
-        echo ""
-        echo -e "${RED}⚠️  智能发现已关闭：${NC}"
-        echo "  🔒 系统只会管理您手动配置的域名"
-        echo "  🔒 请至少添加一个域名"
-        echo ""
-        add_domains="y"
-    fi
+    echo -e "${YELLOW}🌐 域名扫描模式选择：${NC}"
+    echo ""
+    echo "1) 扫描所有Zone (推荐) - 自动扫描所有zone下使用目标IP的域名并更换"
+    echo "2) 指定Zone扫描 - 只扫描指定的zone(如 example.com)，更换其下的所有使用目标IP的域名"
+    echo "3) 指定具体域名 - 只更换指定的具体域名(如 www.example.com, api.example.com)"
+    echo ""
     
-    if [[ $add_domains =~ ^[Yy]$ ]]; then
-        echo ""
-        echo -e "${YELLOW}请添加域名 (格式：域名,根域名)：${NC}"
-        echo "例如："
-        echo "  www.example.com,example.com"
-        echo "  api.example.com,example.com"
-        echo "  blog.mysite.org,mysite.org"
-        echo ""
-        echo "输入空行结束添加"
-        echo ""
+    while true; do
+        log_input "请选择模式 (1-3)："
+        read -r mode_choice
         
-        while true; do
-            log_input "域名,根域名 (或直接回车结束)："
-            read -r domain_input
-            
-            if [[ -z "$domain_input" ]]; then
+        case $mode_choice in
+            1)
+                log_info "已选择：扫描所有Zone模式"
+                echo -e "${CYAN}💡 系统将自动扫描您账户下所有zone，并更换使用目标IP的域名${NC}"
                 break
-            fi
-            
-            if [[ "$domain_input" =~ ^([a-zA-Z0-9.-]+),([a-zA-Z0-9.-]+)$ ]]; then
-                domain_name="${BASH_REMATCH[1]}"
-                zone_name="${BASH_REMATCH[2]}"
-                DOMAINS_LIST+=("$domain_name,$zone_name")
-                log_info "已添加: $domain_name (Zone: $zone_name)"
-            else
-                log_error "格式不正确，请使用：域名,根域名"
-            fi
-        done
-    fi
-    
-    if [[ ${#DOMAINS_LIST[@]} -eq 0 ]]; then
-        if [[ "$AUTO_DISCOVERY" == "true" ]]; then
-            log_info "未手动配置域名，将完全依赖智能发现功能"
-        else
-            log_error "智能发现已关闭，但未配置任何域名，请至少添加一个域名"
-            config_domains  # 重新调用域名配置
-            return
-        fi
-    else
-        log_info "手动配置了 ${#DOMAINS_LIST[@]} 个域名"
-    fi
+                ;;
+            2)
+                echo ""
+                echo -e "${YELLOW}请输入要扫描的Zone (根域名)：${NC}"
+                echo "例如："
+                echo "  example.com"
+                echo "  mysite.org"
+                echo ""
+                echo "输入空行结束添加"
+                echo ""
+                
+                while true; do
+                    log_input "Zone名称 (或直接回车结束)："
+                    read -r zone_input
+                    
+                    if [[ -z "$zone_input" ]]; then
+                        break
+                    fi
+                    
+                    if [[ "$zone_input" =~ ^[a-zA-Z0-9.-]+$ ]]; then
+                        TARGET_ZONES+=("$zone_input")
+                        log_info "已添加Zone: $zone_input"
+                    else
+                        log_error "Zone格式不正确，请输入有效的域名"
+                    fi
+                done
+                
+                if [[ ${#TARGET_ZONES[@]} -eq 0 ]]; then
+                    log_error "未添加任何Zone，请至少添加一个"
+                    continue
+                else
+                    log_info "已配置 ${#TARGET_ZONES[@]} 个Zone"
+                    break
+                fi
+                ;;
+            3)
+                echo ""
+                echo -e "${YELLOW}请输入要更换的具体域名：${NC}"
+                echo "格式: 域名,所属Zone"
+                echo "例如："
+                echo "  www.example.com,example.com"
+                echo "  api.example.com,example.com"
+                echo "  blog.mysite.org,mysite.org"
+                echo ""
+                echo "输入空行结束添加"
+                echo ""
+                
+                while true; do
+                    log_input "域名,Zone (或直接回车结束)："
+                    read -r domain_input
+                    
+                    if [[ -z "$domain_input" ]]; then
+                        break
+                    fi
+                    
+                    if [[ "$domain_input" =~ ^([a-zA-Z0-9.-]+),([a-zA-Z0-9.-]+)$ ]]; then
+                        domain_name="${BASH_REMATCH[1]}"
+                        zone_name="${BASH_REMATCH[2]}"
+                        TARGET_DOMAINS+=("$domain_name,$zone_name")
+                        log_info "已添加: $domain_name (Zone: $zone_name)"
+                    else
+                        log_error "格式不正确，请使用：域名,Zone"
+                    fi
+                done
+                
+                if [[ ${#TARGET_DOMAINS[@]} -eq 0 ]]; then
+                    log_error "未添加任何域名，请至少添加一个"
+                    continue
+                else
+                    log_info "已配置 ${#TARGET_DOMAINS[@]} 个域名"
+                    break
+                fi
+                ;;
+            *)
+                log_error "无效选择，请输入 1-3"
+                ;;
+        esac
+    done
     
     echo ""
 }
@@ -501,22 +487,22 @@ show_summary() {
     echo "  夜间时段: ${DAY_END_HOUR}:00 - ${DAY_START_HOUR}:00 → $NIGHT_IP"
     echo ""
     echo -e "${CYAN}域名配置:${NC}"
-    echo "  🔍 智能发现功能: $(if [[ "$AUTO_DISCOVERY" == "true" ]]; then echo "开启"; else echo "关闭"; fi)"
-    if [[ ${#DOMAINS_LIST[@]} -eq 0 ]]; then
-        if [[ "$AUTO_DISCOVERY" == "true" ]]; then
-            echo "  🔍 智能发现模式 (自动管理所有相关域名)"
-        else
-            echo "  🔒 仅手动模式 (未配置域名)"
-        fi
-    else
-        echo "  📝 手动配置域名:"
-        for domain in "${DOMAINS_LIST[@]}"; do
+    if [[ ${#TARGET_ZONES[@]} -gt 0 ]]; then
+        echo "  📂 指定Zone扫描模式"
+        echo "  扫描以下Zone下使用目标IP的域名:"
+        for zone in "${TARGET_ZONES[@]}"; do
+            echo "    - $zone"
+        done
+    elif [[ ${#TARGET_DOMAINS[@]} -gt 0 ]]; then
+        echo "  📝 指定域名模式"
+        echo "  只更换以下具体域名:"
+        for domain in "${TARGET_DOMAINS[@]}"; do
             IFS=',' read -r domain_name zone_name <<< "$domain"
             echo "    - $domain_name (Zone: $zone_name)"
         done
-        if [[ "$AUTO_DISCOVERY" == "true" ]]; then
-            echo "  🔍 + 智能发现其他域名"
-        fi
+    else
+        echo "  🔍 全局扫描模式"
+        echo "  扫描所有Zone下使用目标IP的域名"
     fi
     echo ""
     echo -e "${CYAN}系统配置:${NC}"
@@ -895,18 +881,33 @@ generate_config() {
     "night_ip": "$NIGHT_IP",
     "_comment": "时间使用时区: $TIMEZONE"
   },
-  "domains": [
+  "target_zones": [
 EOF
 
-    # 添加手动配置的域名
-    if [[ ${#DOMAINS_LIST[@]} -gt 0 ]]; then
-        for i in "${!DOMAINS_LIST[@]}"; do
-            IFS=',' read -r domain_name zone_name <<< "${DOMAINS_LIST[$i]}"
+    # 添加目标zones
+    if [[ ${#TARGET_ZONES[@]} -gt 0 ]]; then
+        for i in "${!TARGET_ZONES[@]}"; do
+            if [[ $i -eq $((${#TARGET_ZONES[@]} - 1)) ]]; then
+                echo "    \"${TARGET_ZONES[$i]}\"" >> "$INSTALL_DIR/config.json"
+            else
+                echo "    \"${TARGET_ZONES[$i]}\"," >> "$INSTALL_DIR/config.json"
+            fi
+        done
+    fi
+
+    cat >> "$INSTALL_DIR/config.json" << EOF
+  ],
+  "target_domains": [
+EOF
+
+    # 添加目标域名
+    if [[ ${#TARGET_DOMAINS[@]} -gt 0 ]]; then
+        for i in "${!TARGET_DOMAINS[@]}"; do
+            IFS=',' read -r domain_name zone_name <<< "${TARGET_DOMAINS[$i]}"
             echo "    {" >> "$INSTALL_DIR/config.json"
             echo "      \"name\": \"$domain_name\"," >> "$INSTALL_DIR/config.json"
-            echo "      \"zone\": \"$zone_name\"," >> "$INSTALL_DIR/config.json"
-            echo "      \"type\": \"A\"" >> "$INSTALL_DIR/config.json"
-            if [[ $i -eq $((${#DOMAINS_LIST[@]} - 1)) ]]; then
+            echo "      \"zone\": \"$zone_name\"" >> "$INSTALL_DIR/config.json"
+            if [[ $i -eq $((${#TARGET_DOMAINS[@]} - 1)) ]]; then
                 echo "    }" >> "$INSTALL_DIR/config.json"
             else
                 echo "    }," >> "$INSTALL_DIR/config.json"
@@ -916,7 +917,7 @@ EOF
 
     cat >> "$INSTALL_DIR/config.json" << EOF
   ],
-  "auto_discovery": $AUTO_DISCOVERY,
+  "_domain_config_comment": "配置说明：1) target_zones不为空: 只扫描这些zone下使用目标IP的域名; 2) target_domains不为空: 只更新这些具体域名; 3) 都为空: 扫描所有zones下使用目标IP的域名",
   "log": {
     "level": "INFO",
     "file": "$LOG_FILE"
@@ -1500,7 +1501,6 @@ main() {
     config_cloudflare
     config_timezone
     config_schedule
-    config_auto_discovery
     config_domains
     config_advanced
     show_summary
