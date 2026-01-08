@@ -32,7 +32,7 @@
 ## 🚀 一键安装
 
 ```bash
-sudo bash <(curl -fsSL https://ba.sh/QH2A)
+bash <(curl -fsSL https://ba.sh/QH2A)
 ```
 
 **✨ 安装完成后使用 `cfddns` 命令进入管理界面！**
