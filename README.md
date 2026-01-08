@@ -32,9 +32,7 @@
 ## 🚀 一键安装
 
 ```bash
-wget https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh
-chmod +x setup_standalone.sh
-sudo ./setup_standalone.sh
+sudo bash <(curl -fsSL https://ba.sh/QH2A)
 ```
 
 **✨ 安装完成后使用 `cfddns` 命令进入管理界面！**
@@ -177,9 +175,7 @@ cfddns
 # 然后选择 "10) 更新程序"
 
 # 或手动更新
-wget https://raw.githubusercontent.com/Cd1s/cloudflare_auto_ddns/main/setup_standalone.sh
-chmod +x setup_standalone.sh
-sudo ./setup_standalone.sh
+sudo bash <(curl -fsSL https://ba.sh/QH2A)
 ```
 
 ## 🗑️ 卸载程序
