@@ -723,6 +723,17 @@ class AutoDDNS:
             self.zone_cache[zone_name] = self.cf_api.get_zone_id(zone_name)
         return self.zone_cache[zone_name]
     
+    def get_all_zones(self) -> list:
+        """获取账户下所有的Zone"""
+        try:
+            result = self.cf_api._make_request("GET", "zones")
+            zones = result.get("result", [])
+            self.logger.debug(f"获取到 {len(zones)} 个Zone")
+            return zones
+        except Exception as e:
+            self.logger.error(f"获取Zone列表失败: {str(e)}")
+            return []
+    
     def update_domain_records(self) -> int:
         """更新域名记录，支持三种模式：
         1. target_domains不为空：只更新指定的具体域名
@@ -841,17 +852,6 @@ class AutoDDNS:
                     self.logger.error(f"❌ 扫描Zone {zone_name} 失败: {str(e)}")
         
         return updated_count
-    
-    def get_all_zones(self) -> list:
-        """获取账户下所有的Zone"""
-        try:
-            result = self.cf_api._make_request("GET", "zones")
-            zones = result.get("result", [])
-            self.logger.debug(f"获取到 {len(zones)} 个Zone")
-            return zones
-        except Exception as e:
-            self.logger.error(f"获取Zone列表失败: {str(e)}")
-            return []
     
     def run(self) -> None:
         """主运行循环"""
