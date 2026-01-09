@@ -587,12 +587,29 @@ class CloudflareAPI:
         return zones[0]["id"]
     
     def get_dns_records(self, zone_id: str, name: str = None) -> List[Dict]:
-        """获取DNS记录"""
-        endpoint = f"zones/{zone_id}/dns_records?type=A"
-        if name:
-            endpoint += f"&name={name}"
-        result = self._make_request("GET", endpoint)
-        return result.get("result", [])
+        """获取DNS记录（支持分页）"""
+        all_records = []
+        page = 1
+        
+        while True:
+            endpoint = f"zones/{zone_id}/dns_records?type=A&page={page}&per_page=100"
+            if name:
+                endpoint += f"&name={name}"
+            
+            result = self._make_request("GET", endpoint)
+            records = result.get("result", [])
+            all_records.extend(records)
+            
+            # 检查是否还有更多页
+            result_info = result.get("result_info", {})
+            total_pages = result_info.get("total_pages", 1)
+            
+            if page >= total_pages:
+                break
+            
+            page += 1
+        
+        return all_records
     
     def update_dns_record(self, zone_id: str, record_id: str, name: str, content: str) -> Dict:
         """更新DNS记录"""
